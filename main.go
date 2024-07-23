@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/asakew/goLang-Fiber-Postgres/models"
 	"github.com/asakew/goLang-Fiber-Postgres/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
@@ -48,7 +49,22 @@ func (r *Repository) CreateMessage(ctx *fiber.Ctx) error {
 }
 
 func (r *Repository) deleteMessage(ctx *fiber.Ctx) error {
+	Messege.Modal := Models.Messeges{}
 
+	id := ctx.Params("id")
+	if id == "" {
+		ctx.Status(http.StatusUnprocessableEntity)
+		return ctx.JSON(fiber.Map{"status": "error", "message": "Message ID cannot be empty", "data": nil})
+	}
+
+	err := r.DB.Delete(&Messege.Modal, id).Error
+	if err != nil {
+		ctx.Status(http.StatusUnprocessableEntity)
+		return ctx.JSON(fiber.Map{"status": "error", "message": "Cannot delete message", "data": nil})
+	}
+
+	ctx.Status(http.StatusOK)
+	return ctx.JSON(fiber.Map{"status": "success", "message": "Deleted message", "data": nil})
 }
 
 func (r *Repository) getMessagesID(ctx *fiber.Ctx) error {
@@ -96,6 +112,11 @@ func main() {
 
 	// Connect to Postgres
 	db, err = storage.NewConnection(Config{})
+	if err != nil {
+		panic(err)
+	}
+
+	err = models.Messages.MigrateMessages(db)
 	if err != nil {
 		panic(err)
 	}
