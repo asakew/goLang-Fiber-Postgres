@@ -2,14 +2,44 @@ package main
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/joho/godotenv"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm
+	_ "gorm.io/driver/postgres"
+	_ "gorm.io/gorm"
+	"os"
 )
+
+type Messege struct {
+	ID      string `json:"id"`
+	Author  string `json:"author"`
+	Message string `json:"message"`
+}
 
 type Repository struct {
 	DB *grom.DB
+}
+
+func (r Repository) SetupRoutes(app *fiber.App) {
+	api := app.Group("/api")
+	api.Post("/creat_message", r.CreateMessage)
+	api.Delete("/delete_message:id", r.deleteMessage)
+	api.Get("/get_messages:id", r.getMessagesID)
+	api.Get("/messages", r.GetMessages)
+}
+
+func (r Repository) CreateMessage(ctx *fiber.Ctx) error {
+
+}
+
+func (r Repository) deleteMessage(ctx *fiber.Ctx) error {
+
+}
+
+func (r Repository) getMessagesID(ctx *fiber.Ctx) error {
+
+}
+
+func (r Repository) GetMessages(ctx *fiber.Ctx) error {
+
 }
 
 func main() {
@@ -18,10 +48,25 @@ func main() {
 		panic("Error loading .env file")
 	}
 
+	//db, err := gorm.Open("postgres", os.Getenv("DATABASE_URL"))
+	//if err != nil {
+	//	panic(err)
+	//}
+
+	db, err := storge.ConnectDB(config.DatabaseURL)
+	if err != nil {
+		panic(err)
+	}
+
+	config := storge.Config{
+		DatabaseURL: os.Getenv("DATABASE_URL"),
+	}
+
+	r := &Repository{
+		DB: db,
+	}
+
 	app := fiber.New()
-	app.Use(cors.New())
-	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Hello, World!")
-	})
-	app.Listen(":3000")
+	r.SetupRoutes(app)
+
 }
