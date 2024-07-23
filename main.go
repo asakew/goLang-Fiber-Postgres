@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/asakew/goLang-Fiber-Postgres/models"
 	"github.com/asakew/goLang-Fiber-Postgres/storage"
 	"github.com/gofiber/fiber/v2"
@@ -19,6 +20,10 @@ type Messege struct {
 
 type Repository struct {
 	DB *grom.DB
+}
+
+func NewRepository(db *gorm.DB) *Repository {
+	return &Repository{db}
 }
 
 func (r Repository) SetupRoutes(app *fiber.App) {
@@ -82,6 +87,25 @@ func (r *Repository) getMessagesID(ctx *fiber.Ctx) error {
 }
 
 func (r *Repository) GetMessages(ctx *fiber.Ctx) error {
+	id := ctx.Params("id")
+	MessegeModal := &ModelsMesseges{}
+	if id == "" {
+		ctx.Status(http.StatusUnprocessableEntity)
+		return ctx.JSON(fiber.Map{"status": "error", "message": "Message ID cannot be empty", "data": nil})
+	}
+
+	fmt.Printf("messege id: %s\n", id)
+	err := r.DB.Where("id = ?", id).First(&MessegeModal).Error
+
+	err := r.DB.First(&MessegeModal, id).Error
+	if err != nil {
+		ctx.Status(http.StatusBadRequest)
+		return ctx.JSON(fiber.Map{"status": "error", "message": "Cannot find message", "data": nil})
+	}
+
+	ctx.Status(http.StatusOK)
+	return ctx.JSON(fiber.Map{"status": "success", "message": "Fetched all messages", "data": MessegeModal})
+
 
 }
 
@@ -96,6 +120,8 @@ func main() {
 	//if err != nil {
 	//	panic(err)
 	//}
+
+
 
 	Config := storage.Config{
 		Host:     os.Getenv("DB_HOST"),
@@ -124,6 +150,7 @@ func main() {
 	r := &Repository{
 		DB: db,
 	}
+
 
 	// Custom config
 	app := fiber.New(fiber.Config{
