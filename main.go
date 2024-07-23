@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	_ "gorm.io/driver/postgres"
+	"gorm.io/gorm"
 	_ "gorm.io/gorm"
 	"os"
 )
@@ -48,20 +49,11 @@ func main() {
 		panic("Error loading .env file")
 	}
 
-	//db, err := gorm.Open("postgres", os.Getenv("DATABASE_URL"))
-	//if err != nil {
-	//	panic(err)
-	//}
-
-	db, err := storge.ConnectDB(config.DatabaseURL)
+	db, err := gorm.Open("postgres", os.Getenv("DATABASE_URL"))
 	if err != nil {
 		panic(err)
 	}
-
-	config := storge.Config{
-		DatabaseURL: os.Getenv("DATABASE_URL"),
-	}
-
+	
 	r := &Repository{
 		DB: db,
 	}
