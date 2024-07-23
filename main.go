@@ -1,11 +1,12 @@
 package main
 
 import (
+	"github.com/asakew/goLang-Fiber-Postgres/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 	_ "gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	_ "gorm.io/gorm"
+	"net/http"
 	"os"
 )
 
@@ -27,38 +28,92 @@ func (r Repository) SetupRoutes(app *fiber.App) {
 	api.Get("/messages", r.GetMessages)
 }
 
-func (r Repository) CreateMessage(ctx *fiber.Ctx) error {
+func (r *Repository) CreateMessage(ctx *fiber.Ctx) error {
+	messege := Messege{}
+
+	err := ctx.BodyParser(&messege)
+	if err != nil {
+		ctx.Status(http.StatusUnprocessableEntity)
+		return ctx.JSON(fiber.Map{"status": "error", "message": "Cannot parse JSON", "data": nil})
+	}
+
+	err := r.DB.Create(&messege).Error
+	if err != nil {
+		ctx.Status(http.StatusUnprocessableEntity)
+		return ctx.JSON(fiber.Map{"status": "error", "message": "Cannot create message", "data": nil})
+	}
+
+	ctx.Status(http.StatusCreated)
+	return ctx.JSON(fiber.Map{"status": "success", "message": "Created message", "data": messege})
+}
+
+func (r *Repository) deleteMessage(ctx *fiber.Ctx) error {
 
 }
 
-func (r Repository) deleteMessage(ctx *fiber.Ctx) error {
+func (r *Repository) getMessagesID(ctx *fiber.Ctx) error {
+	messegeModels := &[]Models.Messeges{}
+
+	err := r.DB.Find{messegeModels}.Error
+	if err != nil {
+		ctx.Status(http.StatusUnprocessableEntity)
+		return ctx.JSON(fiber.Map{"status": "error", "message": "Cannot find message", "data": nil})
+	}
+
+	ctx.Status(http.StatusOK).JSON(fiber.Map{"status": "success", "message": "Fetched all messages", "data": messegeModels})
+
+	return ctx.JSON(messegeModels)
+}
+
+func (r *Repository) GetMessages(ctx *fiber.Ctx) error {
 
 }
 
-func (r Repository) getMessagesID(ctx *fiber.Ctx) error {
-
-}
-
-func (r Repository) GetMessages(ctx *fiber.Ctx) error {
-
-}
 
 func main() {
-	godotenv.Load(".env")
+	godotenv.Load(".env") // Load .env file
 	if error != nil {
 		panic("Error loading .env file")
 	}
 
-	db, err := gorm.Open("postgres", os.Getenv("DATABASE_URL"))
+	//db, err := gorm.Open("postgres", os.Getenv("DATABASE_URL")) // Connect to Postgres
+	//if err != nil {
+	//	panic(err)
+	//}
+
+	Config := storage.Config{
+		Host:     os.Getenv("DB_HOST"),
+		Port:     os.Getenv("DB_PORT"),
+		User:     os.Getenv("DB_USER"),
+		DBName:   os.Getenv("DB_NAME"),
+		Password: os.Getenv("DB_PASSWORD"),
+		SSLMode:  os.Getenv("DB_SSLMODE"),
+	}
+	db, err := storage.NewConnection(Config)
 	if err != nil {
 		panic(err)
 	}
-	
+
+	// Connect to Postgres
+	db, err = storage.NewConnection(Config{})
+	if err != nil {
+		panic(err)
+	}
+
 	r := &Repository{
 		DB: db,
 	}
 
-	app := fiber.New()
+	// Custom config
+	app := fiber.New(fiber.Config{
+		Prefork:       true,
+		CaseSensitive: true,
+		StrictRouting: true,
+		ServerHeader:  "goFiber",
+		AppName:       "Test App v1.0.1",
+	})
 	r.SetupRoutes(app)
+
+	app.Static("/static", "./public") // Serve static files
 
 }
