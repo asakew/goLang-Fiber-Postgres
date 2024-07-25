@@ -1,41 +1,18 @@
-package storage
+package main
 
 import (
-	"fmt"
 	"gorm.io/driver/postgres"
-	_ "gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	_ "gorm.io/gorm"
 )
 
-type Config struct {
-	Host     string
-	Port     string
-	User     string
-	DBName   string
-	Password string
-	SSLMode  string
-}
+var DB *gorm.DB
 
-func NewConnection(config Config) (*gorm.DB, error) {
-	dsn := fmt.Sprintf(
-		'host=%s port=%s user=%s dbname=%s password=%s sslmode=%s',
-		config.Host,
-		config.Port,
-		config.User,
-		config.DBName,
-		config.Password,
-		config.SSLMode,
-	)
-
-	// Connect to Postgres
+func ConnectDB() {
+	dsn := "user=your_user password=your_password dbname=your_database port=5432 sslmode=disable TimeZone=UTC"
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		panic("failed to connect database")
 	}
-	return db, nil
-}
 
-func (c Config) String() string {
-	return fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s", c.Host, c.Port, c.User, c.DBName, c.Password, c.SSLMode)
+	DB = db
 }

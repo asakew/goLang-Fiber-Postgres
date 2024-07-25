@@ -1,24 +1,16 @@
 package models
 
-import "gorm.io/gorm"
+import (
+	"time"
+)
 
 type Message struct {
-	ID      int		'gorm:"primaryKey;autoIncrement" json:"id"'
-	Author  string	'json:"author"'
-	Message string	'json:"message"'
+	ID        uint      `gorm:"primaryKey"`
+	Content   string    `gorm:"not null"`
+	CreatedAt time.Time `gorm:"autoCreateTime"`
+	UpdatedAt time.Time `gorm:"autoUpdateTime"`
 }
 
-type Messeges []Message
-
-func (m *Messeges) TableName() string {
+func (Message) TableName() string {
 	return "messages"
-}
-
-func MigrateMessages(db *gorm.DB) error {
-	err := db.AutoMigrate(&Message{})
-	if err != nil {
-		return err
-	}
-	return nil
-
 }

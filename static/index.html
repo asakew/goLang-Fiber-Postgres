@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Message App</title>
+</head>
+<body>
+<h1>Post a Message</h1>
+<form id="messageForm">
+    <textarea id="content" placeholder="Type a message..."></textarea>
+    <button type="submit">Send</button>
+</form>
+
+<h1>Messages</h1>
+<div id="messages"></div>
+
+<script>
+    document.getElementById('messageForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        let content = document.getElementById('content').value;
+
+        await fetch('/messages', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ content }),
+        });
+
+        loadMessages();
+    });
+
+    async function loadMessages() {
+        const response = await fetch('/messages');
+        const messages = await response.json();
+        const messageDiv = document.getElementById('messages');
+        messageDiv.innerHTML = messages.map(msg => `<p>${msg.content}</p>`).join('');
+    }
+
+    loadMessages();
+</script>
+</body>
+</html>
